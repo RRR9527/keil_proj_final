@@ -2,7 +2,6 @@
 
 > 本文件是 C 语言进阶培训8.10的课程 README，工程基于当前工作区 `keil_proj_final`。
 > 前置：已完成 8.6 Git/Markdown、8.7 编译烧录、8.8 基础 C 工程操作、8.9 关键字补全与结构体/枚举。
-> 硬件范围：只使用板载已配置外设，即 PA4~PA7 四颗 LED、PA8 蜂鸣器、TIM3；
 > 作业单独放在 [doc/作业_day2.md](doc/作业_day2.md)，**本 README 只负责知识讲解**。
 
 ## 本课程教学重点
@@ -21,12 +20,11 @@
 
 | 外设 | 引脚 | 说明 |
 | --- | --- | --- |
-| LED1 | PA4 | 高电平点亮 |
-| LED2 | PA5 | 高电平点亮 |
-| LED3 | PA6 | 高电平点亮 |
-| LED4 | PA7 | 高电平点亮 |
-| 蜂鸣器 | PA8 | 高电平响 |
-| TIM3 | 内部定时器 | 用于周期中断，定时产生命令 |
+| LED1 | PB3 | 高电平点亮 |
+| LED2 | PB4 | 高电平点亮 |
+| LED3 | PB5 | 高电平点亮 |
+| LED4 | PB6 | 高电平点亮 |
+| 蜂鸣器 | PB0 | 高电平响 |
 
 引脚初始化代码在 `Core/Src/gpio.c` 的 `MX_GPIO_Init()` 中，由 STM32CubeMX 生成。
 
@@ -38,12 +36,10 @@ keil_proj_final/
 │   ├── Inc/                 # 主程序、GPIO、定时器等头文件
 │   └── Src/
 │       ├── main.c           # 初始化队列、启动定时器中断、主循环处理命令
-│       ├── gpio.c           # GPIO 初始化，配置 PA4~PA8 为输出
-│       ├── tim.c            # TIM3 初始化，用于周期中断
-│       └── stm32f4xx_it.c   # 中断服务入口与 TIM3 回调
+│       ├── gpio.c           # GPIO 初始化，配置 PB0、PB3~PB6 为输出
 ├── Drivers/
 │   ├── CMSIS/               # ARM 内核相关文件
-│   └── STM32F4xx_HAL_Driver/ # STM32 HAL 库
+│   └── STM32H7xx_HAL_Driver/ # STM32 HAL 库
 ├── hardware/                # 沿用前序课程的 LED、蜂鸣器驱动模块
 │   ├── inc/
 │   │   ├── led.h            # LED 函数声明和引脚宏
@@ -132,7 +128,7 @@ uint8_t *p = data;   // data 退化成首元素地址，相当于 &data[0]
 - `data[i]` 等价于 `*(data + i)`，编译器看到 `data[2]` 会翻译成"从 data 首地址往后走 2 个元素，取出那里的值"；
 - 数组作为函数参数时退化为指针，所以函数内无法用 `sizeof` 得到数组长度 — 必须另传一个长度参数；
 - **越界访问不会自动报错**：`data[10]` 会读写到数组外面的内存，编译不报错、运行也不一定马上爆炸，但可能踩坏其他变量，这是嵌入式最常见的 bug 之一；
-- `sizeof(data)` 得到整个数组的大小（元素个数 × 每个元素的大小），`sizeof(p)` 只得到指针本身的大小（F405 上通常是 4 字节）。
+- `sizeof(data)` 得到整个数组的大小（元素个数 × 每个元素的大小），`sizeof(p)` 只得到指针本身的大小（H723 上通常是 4 字节）。
 
 #### 用宏函数获取数组元素个数
 
@@ -246,8 +242,8 @@ if ((flags & BIT1) != 0U)       // 判断 BIT1 是否为 1
 HAL 库中同时操作多个引脚也是位运算：
 
 ```c
-HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4 | GPIO_PIN_5, GPIO_PIN_SET);
-// GPIO_PIN_4 是 (1U << 4)，GPIO_PIN_5 是 (1U << 5)
+HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3 | GPIO_PIN_4, GPIO_PIN_SET);
+// GPIO_PIN_3 是 (1U << 3)，GPIO_PIN_4 是 (1U << 4)
 // 按位或后得到 (1U << 4) | (1U << 5)，即同时选中两个引脚
 ```
 
@@ -413,7 +409,7 @@ pop -> B：   [ _ ][ _ ][ C ][ D ]    head=2 tail=0 count=2
 - 用 `count` 区分"空"（count == 0）和"满"（count == QUEUE_SIZE）；
 - 队列适合解耦"产生数据的 ISR"和"处理数据的主循环"，是嵌入式里**最常用的数据结构之一**；
 - 队列满时要**明确策略**：丢弃（return false）、覆盖（覆盖最老数据），还是跳过（本课程采用丢弃并记录的方式）,不同的策略有不同的应用场景；
-- 单生产者单消费者的场景下，`uint8_t` 的 `head`/`tail`/`count` 读写是原子的（Cortex-M4 上），暂时不需要关中断保护。多生产者或用更大类型时要额外注意原子性。
+- 单生产者单消费者的场景下，`uint8_t` 的 `head`/`tail`/`count` 读写是原子的（Cortex-M7 上），暂时不需要关中断保护。多生产者或用更大类型时要额外注意原子性。
 
 ### 函数指针与命令表(了解思想即可)
 
