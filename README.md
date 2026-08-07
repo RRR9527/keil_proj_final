@@ -99,7 +99,7 @@ uint8_t *ptr = &value;    // ptr：纸条，上面写着 value 的编号
                           // & 是"取柜子编号"，也叫取地址
 
 *ptr = 43U;               // * 是"顺着纸条找到柜子，动柜子里的东西"
-                          // 结果：value 变成 43
+                          // 结果：value 变成 43（原来的 42 被覆盖）
 ```
 
 要点：
@@ -169,7 +169,7 @@ uint8_t received;
 
 if (ring_buffer_pop(&cmd_queue, &received))   // 把取到的命令写入 received
 {
-    command_process_one(received);
+    command_process_one(received);//执行函数
 }
 ```
 
@@ -415,7 +415,7 @@ pop -> B：   [ _ ][ _ ][ C ][ D ]    head=2 tail=0 count=2
 
 #### 为什么需要函数指针
 
-如果有 4 种命令要处理，新手写法通常是一大段 `switch`：
+如果有 4 种命令要处理，一般写法通常是一大段 `switch`：
 
 ```c
 void process(uint8_t cmd)
@@ -439,6 +439,7 @@ void process(uint8_t cmd)
 typedef void (*cmd_handler)(void);
 
 // 用数组做命令表：数组下标是命令码，数组值是函数指针
+// 以下赋值的对象都是函数名，函数名本身就是函数入口地址
 static const cmd_handler command_table[CMD_COUNT] =
 {
     [CMD_TOGGLE_LED1]  = cmd_toggle_led1,
