@@ -97,11 +97,11 @@ int main(void)
   HAL_Delay(100);
   buzzer_off();
 
-  /* 初始化队列，封一个测试包并入队 */
+  /* 初始化队列，封一个测试包并入队：LED1、LED2 闪烁 3 次 */
   packet_queue_init(&cmd_queue);
 
   command_packet test_pkt;
-  command_pack_create(&test_pkt, 0x03, LED1_PIN);
+  command_pack_create(&test_pkt, 3U, LED_MASK_LED1 | LED_MASK_LED2);
   packet_queue_push(&cmd_queue, &test_pkt);
   /* USER CODE END 2 */
 
@@ -112,6 +112,17 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    /* 出队 -> 解包 -> LED 执行 */
+    command_packet recv_pkt;
+    uint8_t blink_count, led_mask;
+    if (packet_queue_pop(&cmd_queue, &recv_pkt))
+    {
+        if (command_pack_unpack(&recv_pkt, &blink_count, &led_mask))
+        {
+            command_led_execute(blink_count, led_mask);
+        }
+    }
+    /* USER CODE END 3 */
   }
   /* USER CODE END 3 */
 }
