@@ -96,6 +96,10 @@ bool packet_queue_is_full(const packet_queue *q)
 void command_pack_create(command_packet *pkt, uint8_t blink_count, uint8_t led_mask)
 {
     /* 在此实现 */
+    pkt->header[0] = HEADER_HIGH_BYTE;
+    pkt->header[1] = HEADER_LOW_BYTE;
+    pkt->cmd = (blink_count << 4) | (led_mask);
+    pkt->checksum = PACKET_CHECKSUM(pkt->header[0], pkt->header[1], pkt->cmd);
 }
 
 /* ================================================================
@@ -112,6 +116,13 @@ void command_pack_create(command_packet *pkt, uint8_t blink_count, uint8_t led_m
 bool command_pack_unpack(const command_packet *pkt, uint8_t *blink_count, uint8_t *led_mask)
 {
     /* 在此实现 */
+    if (((pkt->header[0] << 4) | pkt->header[1]) == HEADER_WORD){
+        *blink_count = pkt->cmd >> 4;
+        *led_mask = pkt->cmd & 0x0F;
+        return true;
+    }
+
+    return false;
 }
 
 /* ================================================================
