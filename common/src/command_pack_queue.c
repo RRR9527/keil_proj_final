@@ -26,12 +26,9 @@ void packet_queue_init(packet_queue *q)
 bool packet_queue_push(packet_queue *q, const command_packet *pkt)
 {
     /* 在此实现 */
-    if (q->count < PACKET_QUEUE_SIZE){
-        q->tail ++;
-        if (q->tail >= PACKET_QUEUE_SIZE){
-            q->tail %= PACKET_QUEUE_SIZE;
-        }
+    if (q->count < PACKET_QUEUE_SIZE){        
         q->buf[q->tail] = *pkt;
+        q->tail = (q->tail + 1) % PACKET_QUEUE_SIZE;   
         q->count ++;
         return true;
     }else{
@@ -43,17 +40,17 @@ bool packet_queue_push(packet_queue *q, const command_packet *pkt)
 bool packet_queue_pop(packet_queue *q, command_packet *pkt)
 {
     /* 在此实现 */
+    if (q->count == 0){
+        return false;
+    }
+
     *pkt = q->buf[q->head];
     q->head ++;
     if (q->head >= PACKET_QUEUE_SIZE){
         q->head %= PACKET_QUEUE_SIZE;
     }
     q->count --;
-    if (q->count){
-        return true;
-    } 
-
-    return false;
+    return true;
 }
 
 /* TODO: 判空 */
@@ -117,7 +114,7 @@ bool command_pack_unpack(const command_packet *pkt, uint8_t *blink_count, uint8_
 {
     /* 在此实现 */
     if (
-        ((pkt->header[0] << 4) | pkt->header[1]) == HEADER_WORD \
+        ((pkt->header[0] << 8) | pkt->header[1]) == HEADER_WORD \
         && pkt->checksum == PACKET_CHECKSUM(pkt->header[0], pkt->header[1], pkt->cmd)
     ){        
         *blink_count = pkt->cmd >> 4;

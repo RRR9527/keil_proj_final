@@ -31,7 +31,10 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#define LED_MASK_LED1 0x01u
+#define LED_MASK_LED2 0x02u
+#define LED_MASK_LED3 0x04u
+#define LED_MASK_LED4 0x08u
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
